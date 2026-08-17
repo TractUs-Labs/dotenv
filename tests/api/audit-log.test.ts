@@ -3,6 +3,7 @@ import { runMigrations } from "@/lib/db/migrate";
 import { resetDb, seedUser, testDb } from "../helpers/db";
 import { grants } from "@/lib/db/schema";
 import { writeAudit } from "@/lib/audit/audit";
+import { UnauthorizedError } from "@/lib/auth/session";
 
 vi.mock("@/lib/db/client", () => ({ getDb: () => testDb }));
 const requireUserMock = vi.fn();
@@ -34,5 +35,22 @@ describe("audit-log API", () => {
     const { GET } = await import("@/app/api/audit-log/route");
     const res = await GET();
     expect(res.status).toBe(403);
+  });
+
+  it("returns 403 for a user with no org grant", async () => {
+    const noGrant = await seedUser("nogrant@example.com");
+    requireUserMock.mockResolvedValue({ id: noGrant.id, email: noGrant.email });
+
+    const { GET } = await import("@/app/api/audit-log/route");
+    const res = await GET();
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 401 when the user is not authenticated", async () => {
+    requireUserMock.mockRejectedValue(new UnauthorizedError());
+
+    const { GET } = await import("@/app/api/audit-log/route");
+    const res = await GET();
+    expect(res.status).toBe(401);
   });
 });

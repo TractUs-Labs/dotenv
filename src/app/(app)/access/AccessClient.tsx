@@ -15,20 +15,14 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, X } from "lucide-react";
+import { type Role, roleRank, highestRole } from "@/lib/access/roles";
 
-type Role = "owner" | "admin" | "member" | "viewer";
 type Grant = { id: string; scopeType: "org" | "project" | "environment"; scopeId: string | null; role: Role };
 type UserWithAccess = { user: { id: string; email: string }; grants: Grant[] };
 type Project = { id: string; name: string };
 type Environment = { id: string; projectId: string; name: string };
 
-const ROLE_RANK: Record<Role, number> = { owner: 4, admin: 3, member: 2, viewer: 1 };
 const ALL_ROLES: Role[] = ["viewer", "member", "admin", "owner"];
-
-function highestRole(grants: Grant[]): Role | null {
-  if (grants.length === 0) return null;
-  return grants.reduce((a, g) => (ROLE_RANK[g.role] >= ROLE_RANK[a] ? g.role : a), grants[0].role);
-}
 
 function scopeLabel(g: Grant, projects: Project[], environments: Environment[]): string {
   if (g.scopeType === "org") return "Organization";
@@ -58,10 +52,16 @@ export default function AccessClient({
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pageError, setPageError] = useState<string | null>(null);
 
   async function refresh() {
     const res = await fetch("/api/grants");
-    if (res.ok) setUsers((await res.json()).users);
+    if (res.ok) {
+      setUsers((await res.json()).users);
+    } else {
+      const body = await res.json().catch(() => ({}));
+      setPageError(body.error ?? "Couldn't refresh access list.");
+    }
   }
 
   function resetForm() {
@@ -95,16 +95,22 @@ export default function AccessClient({
 
   async function revoke(userId: string, g: Grant) {
     if (!confirm("Revoke this access? Secrets in scope will be flagged for rotation.")) return;
-    await fetch("/api/grants", {
+    setPageError(null);
+    const res = await fetch("/api/grants", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, scopeType: g.scopeType, scopeId: g.scopeId }),
     });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setPageError(body.error ?? "Couldn't revoke access.");
+      return;
+    }
     await refresh();
   }
 
   const envsForProject = environments.filter((e) => e.projectId === form.projectId);
-  const grantableRoles = ALL_ROLES.filter((r) => ROLE_RANK[r] <= ROLE_RANK[currentRole]);
+  const grantableRoles = ALL_ROLES.filter((r) => roleRank(r) <= roleRank(currentRole));
 
   return (
     <main className="max-w-4xl w-full mx-auto px-8 py-10">
@@ -235,6 +241,8 @@ export default function AccessClient({
         </Dialog>
       </div>
 
+      {pageError && <p className="text-xs text-destructive mb-3">{pageError}</p>}
+
       <div className="border border-border rounded-panel overflow-hidden">
         <Table>
           <TableHeader>
@@ -246,7 +254,7 @@ export default function AccessClient({
           </TableHeader>
           <TableBody>
             {users.map(({ user, grants }) => {
-              const top = highestRole(grants);
+              const top = highestRole(grants.map((g) => g.role));
               return (
                 <TableRow key={user.id}>
                   <TableCell>

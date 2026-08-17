@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth/auth";
+import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db/client";
 import { listProjectsForUserWithCounts } from "@/lib/projects/projects";
 import { NewProjectDialog } from "@/components/NewProjectDialog";
@@ -7,7 +8,8 @@ import Link from "next/link";
 
 export default async function Home() {
   const session = await auth();
-  const userId = (session as unknown as { userId?: string }).userId!;
+  const userId = (session as unknown as { userId?: string } | null)?.userId;
+  if (!userId) redirect("/signin");
   const projects = await listProjectsForUserWithCounts(getDb(), userId);
 
   return (
