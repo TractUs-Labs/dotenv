@@ -1,11 +1,11 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { sql } from "drizzle-orm";
+import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import { sql } from "drizzle-orm";
+import * as schema from "@/lib/db/schema";
 import { users } from "@/lib/db/schema";
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-export const testDb = drizzle(pool);
+const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
+export const testDb: NodePgDatabase<typeof schema> = drizzle(pool, { schema });
 
 export async function resetDb(): Promise<void> {
   await testDb.execute(sql`
