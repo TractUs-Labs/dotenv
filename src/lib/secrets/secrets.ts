@@ -44,3 +44,21 @@ export async function listSecrets(db: Db, environmentId: string) {
   }
   return out;
 }
+
+export async function rotateSecret(
+  db: Db, kek: Buffer,
+  input: { secretId: string; value: string; userId: string },
+): Promise<{ version: number }> {
+  const latest = await latestVersionRow(db, input.secretId);
+  const nextVersion = (latest?.version ?? 0) + 1;
+
+  const enc = encryptSecret(input.value, kek);
+  await db.insert(secretVersions).values({ secretId: input.secretId, version: nextVersion, createdBy: input.userId, ...enc });
+
+  await db.update(secrets)
+    .set({ needsRotation: false, needsRotationReason: null, needsRotationAt: null })
+    .where(eq(secrets.id, input.secretId));
+
+  await writeAudit(db, { actorId: input.userId, action: "secret.rotate", targetType: "secret", targetId: input.secretId, metadata: { version: nextVersion } });
+  return { version: nextVersion };
+}
