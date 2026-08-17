@@ -1,5 +1,5 @@
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, count, eq, inArray, isNull } from "drizzle-orm";
 import * as schema from "@/lib/db/schema";
 import { projects, environments, grants } from "@/lib/db/schema";
 import { writeAudit } from "@/lib/audit/audit";
@@ -63,6 +63,22 @@ export async function listProjectsForUser(db: Db, userId: string): Promise<Proje
   const pids = [...projectIds];
   if (pids.length === 0) return [];
   return db.select().from(projects).where(inArray(projects.id, pids));
+}
+
+export async function listProjectsForUserWithCounts(
+  db: Db,
+  userId: string,
+): Promise<Array<Project & { environmentCount: number }>> {
+  const base = await listProjectsForUser(db, userId);
+  if (base.length === 0) return [];
+  const ids = base.map((p) => p.id);
+  const counts = await db
+    .select({ projectId: environments.projectId, count: count() })
+    .from(environments)
+    .where(inArray(environments.projectId, ids))
+    .groupBy(environments.projectId);
+  const countMap = new Map(counts.map((c) => [c.projectId, Number(c.count)]));
+  return base.map((p) => ({ ...p, environmentCount: countMap.get(p.id) ?? 0 }));
 }
 
 export async function getEnvironments(db: Db, projectId: string): Promise<Environment[]> {
