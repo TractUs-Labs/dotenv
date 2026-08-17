@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { AddSecretDialog } from "@/components/AddSecretDialog";
 import { Eye, EyeOff, RefreshCw, AlertTriangle } from "lucide-react";
 
 type SecretMeta = {
@@ -68,19 +69,22 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
   return (
     <>
       <section className="mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            {envName}
-          </h2>
-          {secrets && secrets.some((s) => s.needsRotation) && (
-            <Badge variant="destructive" className="text-xs gap-1">
-              <AlertTriangle className="w-3 h-3" />
-              Needs attention
-            </Badge>
-          )}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              {envName}
+            </h2>
+            {secrets && secrets.some((s) => s.needsRotation) && (
+              <Badge variant="warning" className="text-xs gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                Needs attention
+              </Badge>
+            )}
+          </div>
+          <AddSecretDialog envId={envId} onCreated={load} />
         </div>
 
-        <div className="rounded-lg border border-border overflow-hidden">
+        <div className="rounded-panel border border-border overflow-hidden">
           {loading ? (
             <div className="divide-y divide-border">
               {[1, 2, 3].map((i) => (
@@ -182,7 +186,7 @@ function SecretRow({
         <div className="flex items-center gap-2">
           <span className="font-mono text-sm font-medium text-foreground truncate">{secret.key}</span>
           {secret.needsRotation && (
-            <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4 gap-0.5 shrink-0">
+            <Badge variant="warning" className="text-[10px] px-1.5 py-0 h-4 gap-0.5 shrink-0">
               <AlertTriangle className="w-2.5 h-2.5" />
               rotate
             </Badge>
