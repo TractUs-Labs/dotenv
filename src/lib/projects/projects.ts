@@ -68,3 +68,8 @@ export async function listProjectsForUser(db: Db, userId: string): Promise<Proje
 export async function getEnvironments(db: Db, projectId: string): Promise<Environment[]> {
   return db.select().from(environments).where(eq(environments.projectId, projectId));
 }
+
+export async function getProject(db: Db, projectId: string): Promise<Project | undefined> {
+  const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+  return project;
+}

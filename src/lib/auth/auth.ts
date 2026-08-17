@@ -7,7 +7,7 @@ import { handleSignIn, GoogleProfile } from "./signin";
 import { env } from "@/lib/env";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [Google({})],
+  providers: [Google],
   session: { strategy: "jwt" },
   callbacks: {
     async signIn({ profile }) {

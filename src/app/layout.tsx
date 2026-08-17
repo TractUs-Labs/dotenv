@@ -13,13 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Team Secrets Manager",
+  title: "dotenv — Team Secrets Manager",
   description: "Manage team secrets securely",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" className={`dark ${geistSans.variable} ${geistMono.variable}`}>
       <body>{children}</body>
     </html>
   );
