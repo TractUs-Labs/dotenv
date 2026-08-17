@@ -218,7 +218,13 @@ export default function AccessClient({
               {error && <p className="text-xs text-destructive">{error}</p>}
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setGrantOpen(false)}>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setGrantOpen(false);
+                  resetForm();
+                }}
+              >
                 Cancel
               </Button>
               <Button onClick={submitGrant} disabled={!form.userId || submitting}>
