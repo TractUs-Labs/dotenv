@@ -6,11 +6,7 @@ import { requireUser, UnauthorizedError } from "@/lib/auth/session";
 import { grantAccess, revokeAccess, listUsersWithAccess } from "@/lib/access/grants";
 import { grants } from "@/lib/db/schema";
 import { roleAtLeast, roleRank, highestRole, Role } from "@/lib/access/roles";
-
-async function requireOrgRole(userId: string): Promise<Role | null> {
-  const rows = await getDb().select().from(grants).where(and(eq(grants.userId, userId), eq(grants.scopeType, "org"), isNull(grants.scopeId)));
-  return highestRole(rows.map((r) => r.role as Role));
-}
+import { getOrgRole } from "@/lib/access/authorize";
 
 const scopeSchema = z.object({
   userId: z.string().uuid(),
@@ -21,7 +17,7 @@ const scopeSchema = z.object({
 export async function GET() {
   try {
     const user = await requireUser();
-    const granterRole = await requireOrgRole(user.id);
+    const granterRole = await getOrgRole(getDb(), user.id);
     if (!granterRole || !roleAtLeast(granterRole, "admin")) return NextResponse.json({ error: "forbidden" }, { status: 403 });
     return NextResponse.json({ users: await listUsersWithAccess(getDb()) });
   } catch (e) {
@@ -33,7 +29,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const user = await requireUser();
-    const granterRole = await requireOrgRole(user.id);
+    const granterRole = await getOrgRole(getDb(), user.id);
     if (!granterRole || !roleAtLeast(granterRole, "admin")) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
     const body = scopeSchema.extend({ role: z.enum(["owner", "admin", "member", "viewer"]) }).parse(await req.json());
@@ -54,7 +50,7 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const user = await requireUser();
-    const granterRole = await requireOrgRole(user.id);
+    const granterRole = await getOrgRole(getDb(), user.id);
     if (!granterRole || !roleAtLeast(granterRole, "admin")) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
     const body = scopeSchema.parse(await req.json());

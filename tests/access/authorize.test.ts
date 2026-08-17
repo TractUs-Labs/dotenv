@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { runMigrations } from "@/lib/db/migrate";
 import { resetDb, seedUser, testDb } from "../helpers/db";
 import { projects, environments, secrets, grants } from "@/lib/db/schema";
-import { effectiveRoleForEnv, canReadSecret, canWriteSecret } from "@/lib/access/authorize";
+import { effectiveRoleForEnv, canReadSecret, canWriteSecret, getOrgRole } from "@/lib/access/authorize";
 
 beforeAll(async () => { await runMigrations(); });
 beforeEach(async () => { await resetDb(); });
@@ -39,5 +39,22 @@ describe("authorize", () => {
     await testDb.insert(grants).values({ userId: user.id, scopeType: "environment", scopeId: env.id, role: "viewer" });
     expect(await canReadSecret(testDb, user.id, secret.id)).toBe(true);
     expect(await canWriteSecret(testDb, user.id, secret.id)).toBe(false);
+  });
+});
+
+describe("getOrgRole", () => {
+  it("returns null when the user has no org grant", async () => {
+    const user = await seedUser("noone@example.com");
+    expect(await getOrgRole(testDb, user.id)).toBeNull();
+  });
+
+  it("returns the org-scoped role, ignoring project/environment-scoped grants", async () => {
+    const { user, proj, env } = await fixture();
+    await testDb.insert(grants).values({ userId: user.id, scopeType: "project", scopeId: proj.id, role: "owner" });
+    await testDb.insert(grants).values({ userId: user.id, scopeType: "environment", scopeId: env.id, role: "owner" });
+    expect(await getOrgRole(testDb, user.id)).toBeNull();
+
+    await testDb.insert(grants).values({ userId: user.id, scopeType: "org", scopeId: null, role: "member" });
+    expect(await getOrgRole(testDb, user.id)).toBe("member");
   });
 });

@@ -3,14 +3,8 @@ import { z } from "zod";
 import { getDb } from "@/lib/db/client";
 import { requireUser, UnauthorizedError } from "@/lib/auth/session";
 import { createProject, listProjectsForUser } from "@/lib/projects/projects";
-import { grants } from "@/lib/db/schema";
-import { and, eq, isNull } from "drizzle-orm";
-import { roleAtLeast, highestRole, Role } from "@/lib/access/roles";
-
-async function orgRole(userId: string): Promise<Role | null> {
-  const rows = await getDb().select().from(grants).where(and(eq(grants.userId, userId), eq(grants.scopeType, "org"), isNull(grants.scopeId)));
-  return highestRole(rows.map((r) => r.role as Role));
-}
+import { roleAtLeast } from "@/lib/access/roles";
+import { getOrgRole } from "@/lib/access/authorize";
 
 export async function GET() {
   try {
@@ -25,7 +19,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const user = await requireUser();
-    const role = await orgRole(user.id);
+    const role = await getOrgRole(getDb(), user.id);
     if (!role || !roleAtLeast(role, "admin")) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
     const body = z.object({ name: z.string().min(1) }).parse(await req.json());

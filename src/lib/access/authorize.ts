@@ -47,3 +47,9 @@ export async function canManageGrantsForEnv(db: Db, userId: string, environmentI
   const role = await effectiveRoleForEnv(db, userId, environmentId);
   return role !== null && roleAtLeast(role, "admin");
 }
+
+export async function getOrgRole(db: Db, userId: string): Promise<Role | null> {
+  const rows = await db.select({ role: grants.role }).from(grants)
+    .where(and(eq(grants.userId, userId), eq(grants.scopeType, "org"), isNull(grants.scopeId)));
+  return highestRole(rows.map((r) => r.role as Role));
+}
