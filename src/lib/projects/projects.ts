@@ -1,7 +1,7 @@
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import * as schema from "@/lib/db/schema";
-import { projects, environments } from "@/lib/db/schema";
+import { projects, environments, grants } from "@/lib/db/schema";
 import { writeAudit } from "@/lib/audit/audit";
 
 type Db = NodePgDatabase<typeof schema>;
@@ -29,6 +29,40 @@ export async function createProject(db: Db, input: { name: string; userId: strin
 
 export async function listProjects(db: Db): Promise<Project[]> {
   return db.select().from(projects);
+}
+
+export async function listProjectsForUser(db: Db, userId: string): Promise<Project[]> {
+  // Check for org-scoped grant (gives access to all projects)
+  const orgGrant = await db.select({ id: grants.id }).from(grants)
+    .where(and(eq(grants.userId, userId), eq(grants.scopeType, "org"), isNull(grants.scopeId)))
+    .limit(1);
+
+  if (orgGrant.length > 0) {
+    return db.select().from(projects);
+  }
+
+  // Get projects via project-scoped grants
+  const projectGrants = await db.select({ scopeId: grants.scopeId }).from(grants)
+    .where(and(eq(grants.userId, userId), eq(grants.scopeType, "project")));
+
+  // Get projects via environment-scoped grants
+  const envGrants = await db.select({ scopeId: grants.scopeId }).from(grants)
+    .where(and(eq(grants.userId, userId), eq(grants.scopeType, "environment")));
+
+  const projectIds = new Set<string>(projectGrants.map((g) => g.scopeId!).filter(Boolean));
+
+  if (envGrants.length > 0) {
+    const envIds = envGrants.map((g) => g.scopeId!).filter(Boolean);
+    const envProjectRows = await db.select({ projectId: environments.projectId }).from(environments)
+      .where(inArray(environments.id, envIds));
+    for (const e of envProjectRows) {
+      projectIds.add(e.projectId);
+    }
+  }
+
+  const pids = [...projectIds];
+  if (pids.length === 0) return [];
+  return db.select().from(projects).where(inArray(projects.id, pids));
 }
 
 export async function getEnvironments(db: Db, projectId: string): Promise<Environment[]> {

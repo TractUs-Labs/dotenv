@@ -2,20 +2,20 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb } from "@/lib/db/client";
 import { requireUser, UnauthorizedError } from "@/lib/auth/session";
-import { createProject, listProjects } from "@/lib/projects/projects";
+import { createProject, listProjectsForUser } from "@/lib/projects/projects";
 import { grants } from "@/lib/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
-import { roleAtLeast, Role } from "@/lib/access/roles";
+import { roleAtLeast, highestRole, Role } from "@/lib/access/roles";
 
 async function orgRole(userId: string): Promise<Role | null> {
   const rows = await getDb().select().from(grants).where(and(eq(grants.userId, userId), eq(grants.scopeType, "org"), isNull(grants.scopeId)));
-  return (rows[0]?.role as Role) ?? null;
+  return highestRole(rows.map((r) => r.role as Role));
 }
 
 export async function GET() {
   try {
-    await requireUser();
-    return NextResponse.json({ projects: await listProjects(getDb()) });
+    const user = await requireUser();
+    return NextResponse.json({ projects: await listProjectsForUser(getDb(), user.id) });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     throw e;

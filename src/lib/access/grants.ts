@@ -2,7 +2,7 @@ import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import * as schema from "@/lib/db/schema";
 import { environments, grants, secrets, users } from "@/lib/db/schema";
-import { Role } from "./roles";
+import { Role, roleRank } from "./roles";
 import { writeAudit } from "@/lib/audit/audit";
 
 type Db = NodePgDatabase<typeof schema>;
@@ -28,6 +28,16 @@ export async function grantAccess(
     const [updated] = await db.update(grants).set({ role: input.role, grantedBy: input.granterId })
       .where(eq(grants.id, existing[0].id)).returning();
     result = updated;
+
+    // Role downgrade — flag affected secrets for rotation
+    if (roleRank(input.role as Role) < roleRank(existing[0].role as Role)) {
+      const envIds = await affectedEnvironmentIds(db, input.scope);
+      if (envIds.length > 0) {
+        await db.update(secrets)
+          .set({ needsRotation: true, needsRotationReason: "access_revoked", needsRotationAt: new Date() })
+          .where(inArray(secrets.environmentId, envIds));
+      }
+    }
   } else {
     const [created] = await db.insert(grants).values({
       userId: input.userId, scopeType: input.scope.scopeType, scopeId: input.scope.scopeId,
@@ -58,6 +68,11 @@ export async function revokeAccess(
   input: { revokerId: string; userId: string; scope: Scope },
 ): Promise<{ revokedCount: number; flaggedSecretIds: string[] }> {
   const deleted = await db.delete(grants).where(scopeMatch(input.userId, input.scope)).returning();
+
+  // Guard: if nothing was deleted, skip flagging and return early
+  if (deleted.length === 0) {
+    return { revokedCount: 0, flaggedSecretIds: [] };
+  }
 
   const envIds = await affectedEnvironmentIds(db, input.scope);
   let flaggedSecretIds: string[] = [];

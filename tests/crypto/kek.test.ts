@@ -1,9 +1,11 @@
-import { describe, it, expect } from "vitest";
-import { loadKek } from "@/lib/crypto/kek";
+import { describe, it, expect, beforeEach } from "vitest";
+import { loadKek, clearKekCache } from "@/lib/crypto/kek";
 import { writeFileSync, mkdtempSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
+
+beforeEach(() => { clearKekCache(); });
 
 describe("loadKek", () => {
   it("loads a valid 32-byte base64 key", () => {

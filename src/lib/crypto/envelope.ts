@@ -11,23 +11,27 @@ export interface EncryptedSecret {
 
 const ALG = "aes-256-gcm";
 
-function encryptGcm(key: Buffer, plaintext: Buffer) {
+function encryptGcm(key: Buffer, plaintext: Buffer, aad?: Buffer) {
   const iv = randomBytes(12);
   const cipher = createCipheriv(ALG, key, iv);
+  if (aad) cipher.setAAD(aad);
   const ct = Buffer.concat([cipher.update(plaintext), cipher.final()]);
   return { iv, ciphertext: ct, authTag: cipher.getAuthTag() };
 }
 
-function decryptGcm(key: Buffer, iv: Buffer, ciphertext: Buffer, authTag: Buffer) {
+function decryptGcm(key: Buffer, iv: Buffer, ciphertext: Buffer, authTag: Buffer, aad?: Buffer) {
   const decipher = createDecipheriv(ALG, key, iv);
   decipher.setAuthTag(authTag);
+  if (aad) decipher.setAAD(aad);
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
 }
 
-export function encryptSecret(plaintext: string, kek: Buffer): EncryptedSecret {
+export function encryptSecret(plaintext: string, kek: Buffer, secretId: string, version: number): EncryptedSecret {
   const dek = randomBytes(32);
-  const value = encryptGcm(dek, Buffer.from(plaintext, "utf8"));
-  const wrapped = encryptGcm(kek, dek);
+  const valueAad = Buffer.from(`${secretId}:${version}`);
+  const dekAad = Buffer.from("kek-wrap");
+  const value = encryptGcm(dek, Buffer.from(plaintext, "utf8"), valueAad);
+  const wrapped = encryptGcm(kek, dek, dekAad);
   return {
     ciphertext: value.ciphertext.toString("base64"),
     iv: value.iv.toString("base64"),
@@ -38,18 +42,22 @@ export function encryptSecret(plaintext: string, kek: Buffer): EncryptedSecret {
   };
 }
 
-export function decryptSecret(payload: EncryptedSecret, kek: Buffer): string {
+export function decryptSecret(payload: EncryptedSecret, kek: Buffer, secretId: string, version: number): string {
+  const dekAad = Buffer.from("kek-wrap");
+  const valueAad = Buffer.from(`${secretId}:${version}`);
   const dek = decryptGcm(
     kek,
     Buffer.from(payload.dekIv, "base64"),
     Buffer.from(payload.wrappedDek, "base64"),
     Buffer.from(payload.dekAuthTag, "base64"),
+    dekAad,
   );
   const plaintext = decryptGcm(
     dek,
     Buffer.from(payload.iv, "base64"),
     Buffer.from(payload.ciphertext, "base64"),
     Buffer.from(payload.authTag, "base64"),
+    valueAad,
   );
   return plaintext.toString("utf8");
 }

@@ -1,7 +1,8 @@
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { and, eq, isNull } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import * as schema from "@/lib/db/schema";
 import { users, grants } from "@/lib/db/schema";
+import { writeAudit } from "@/lib/audit/audit";
 
 type Db = NodePgDatabase<typeof schema>;
 export type GoogleProfile = { email?: string; email_verified?: boolean; hd?: string; name?: string; picture?: string };
@@ -10,6 +11,9 @@ export async function handleSignIn(db: Db, profile: GoogleProfile, companyDomain
   if (!profile.email || profile.email_verified !== true || profile.hd !== companyDomain) {
     return { ok: false };
   }
+
+  // Check total user count BEFORE upsert to determine if this is the very first user
+  const [{ count: totalUsers }] = await db.select({ count: count() }).from(users);
 
   const existing = await db.select().from(users).where(eq(users.email, profile.email));
   let userId: string;
@@ -21,9 +25,16 @@ export async function handleSignIn(db: Db, profile: GoogleProfile, companyDomain
     userId = created.id;
   }
 
-  const owners = await db.select().from(grants).where(and(eq(grants.scopeType, "org"), isNull(grants.scopeId), eq(grants.role, "owner")));
-  if (owners.length === 0) {
+  // Only bootstrap owner if this is the very first user ever (totalUsers === 0 before this sign-in)
+  if (totalUsers === 0) {
     await db.insert(grants).values({ userId, scopeType: "org", scopeId: null, role: "owner", grantedBy: userId });
+    await writeAudit(db, {
+      actorId: userId,
+      action: "grant.create",
+      targetType: "user",
+      targetId: userId,
+      metadata: { role: "owner", scope: { scopeType: "org", scopeId: null }, bootstrap: true },
+    });
   }
 
   return { ok: true, userId };

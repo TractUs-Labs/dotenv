@@ -14,7 +14,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ secretI
     if (!(await canReadSecret(getDb(), user.id, secretId))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
     const value = await getSecretValue(getDb(), loadKek(env.kekFile()), secretId);
     await writeAudit(getDb(), { actorId: user.id, action: "secret.read", targetType: "secret", targetId: secretId });
-    return NextResponse.json({ value });
+    return NextResponse.json({ value }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     throw e;
