@@ -9,7 +9,7 @@ export default function SignInPage() {
       <div className="w-full max-w-sm space-y-8">
         {/* Wordmark */}
         <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
             <ShieldCheck className="w-6 h-6 text-primary" />
           </div>
           <div className="text-center">
