@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { runMigrations } from "@/lib/db/migrate";
 import { resetDb, seedUser, testDb } from "../helpers/db";
-import { createProject, listProjects, getEnvironments, listProjectsForUserWithCounts } from "@/lib/projects/projects";
+import { createProject, listProjects, getEnvironments, listProjectsForUserWithCounts, listAllEnvironments } from "@/lib/projects/projects";
 import * as schema from "@/lib/db/schema";
 
 beforeAll(async () => { await runMigrations(); });
@@ -27,5 +27,13 @@ describe("projects", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].name).toBe("Has Access");
     expect(rows[0].environmentCount).toBe(3);
+  });
+
+  it("lists environments across all projects", async () => {
+    const u = await seedUser("dave@example.com");
+    await createProject(testDb, { name: "A", userId: u.id });
+    await createProject(testDb, { name: "B", userId: u.id });
+    const rows = await listAllEnvironments(testDb);
+    expect(rows).toHaveLength(6); // 3 environments per project x 2 projects
   });
 });
