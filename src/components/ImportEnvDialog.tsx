@@ -33,6 +33,7 @@ export function ImportEnvDialog({ envId, onImported }: Props) {
       setRaw("");
       setResult(null);
       setError(null);
+      setSubmitting(false);
     }
   }
 
@@ -41,19 +42,24 @@ export function ImportEnvDialog({ envId, onImported }: Props) {
     setSubmitting(true);
     setError(null);
     setResult(null);
-    const res = await fetch(`/api/environments/${envId}/secrets/bulk`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ secrets: pairs }),
-    });
-    setSubmitting(false);
-    if (!res.ok) {
-      setError("Import failed. Check you have member access.");
-      return;
+    try {
+      const res = await fetch(`/api/environments/${envId}/secrets/bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secrets: pairs }),
+      });
+      if (!res.ok) {
+        setError("Import failed. Check you have member access.");
+        return;
+      }
+      const data: { created: number; skipped: string[] } = await res.json();
+      setResult(data);
+      onImported();
+    } catch {
+      setError("Import failed. Check your connection and try again.");
+    } finally {
+      setSubmitting(false);
     }
-    const data: { created: number; skipped: string[] } = await res.json();
-    setResult(data);
-    onImported();
   }
 
   return (
@@ -113,7 +119,7 @@ export function ImportEnvDialog({ envId, onImported }: Props) {
           </Button>
           {!result && (
             <Button onClick={submit} disabled={!pairs.length || submitting}>
-              {submitting ? "Importing…" : `Import ${pairs.length || ""}`}
+              {submitting ? "Importing…" : (pairs.length > 0 ? `Import ${pairs.length}` : "Import")}
             </Button>
           )}
         </DialogFooter>

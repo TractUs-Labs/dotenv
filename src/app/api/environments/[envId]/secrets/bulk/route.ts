@@ -9,7 +9,12 @@ import { loadKek } from "@/lib/crypto/kek";
 import { env } from "@/lib/env";
 
 const bodySchema = z.object({
-  secrets: z.array(z.object({ key: z.string().min(1), value: z.string() })).min(1).max(500),
+  secrets: z.array(
+    z.object({
+      key: z.string().min(1).max(256),
+      value: z.string().max(65536),
+    })
+  ).min(1).max(500),
 });
 
 export async function POST(req: Request, { params }: { params: Promise<{ envId: string }> }) {
@@ -35,7 +40,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ envId: 
       try {
         await createSecret(db, kek, { environmentId: envId, key, value, userId: user.id });
         created++;
-      } catch {
+      } catch (err) {
+        const pgCode = (err as { code?: string }).code;
+        if (pgCode !== "23505") {
+          console.error(`[bulk-secrets] unexpected error for key "${key}":`, err);
+        }
         skipped.push(key);
       }
     }

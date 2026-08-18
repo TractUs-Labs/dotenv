@@ -23,7 +23,7 @@ const mockCreateSecret = vi.fn(async (_db: unknown, _kek: Buffer, input: { key: 
   ({ id: `secret-${input.key}`, key: input.key })
 );
 vi.mock("@/lib/secrets/secrets", () => ({
-  createSecret: (...args: unknown[]) => mockCreateSecret(...args),
+  createSecret: (...args: Parameters<typeof mockCreateSecret>) => mockCreateSecret(...args),
 }));
 
 function makeRequest(body: unknown) {
