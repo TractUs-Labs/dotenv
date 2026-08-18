@@ -69,7 +69,7 @@ describe("POST /api/environments/[envId]/secrets/bulk", () => {
 
   it("returns 403 when user lacks member role", async () => {
     const { roleAtLeast } = await import("@/lib/access/roles");
-    (roleAtLeast as any).mockReturnValueOnce(false);
+    vi.mocked(roleAtLeast).mockReturnValueOnce(false);
 
     const { POST } = await import("@/app/api/environments/[envId]/secrets/bulk/route");
     const res = await POST(makeRequest({ secrets: [] }), {
