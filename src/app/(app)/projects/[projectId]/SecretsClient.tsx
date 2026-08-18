@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { AddSecretDialog } from "@/components/AddSecretDialog";
+import { ImportEnvDialog } from "@/components/ImportEnvDialog";
 import { Eye, EyeOff, RefreshCw, AlertTriangle } from "lucide-react";
 
 type SecretMeta = {
@@ -81,7 +82,10 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
               </Badge>
             )}
           </div>
-          <AddSecretDialog envId={envId} onCreated={load} />
+          <div className="flex items-center gap-2">
+            <ImportEnvDialog envId={envId} onImported={load} />
+            <AddSecretDialog envId={envId} onCreated={load} />
+          </div>
         </div>
 
         <div className="rounded-panel border border-border overflow-hidden">
