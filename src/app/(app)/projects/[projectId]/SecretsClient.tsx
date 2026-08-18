@@ -10,6 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { AddSecretDialog } from "@/components/AddSecretDialog";
+import { ImportEnvDialog } from "@/components/ImportEnvDialog";
+import { Eye, EyeOff, RefreshCw, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Eye, EyeOff, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -69,6 +73,23 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
 
   return (
     <>
+      <section className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              {envName}
+            </h2>
+            {secrets && secrets.some((s) => s.needsRotation) && (
+              <Badge variant="warning" className="text-xs gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                Needs attention
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <ImportEnvDialog envId={envId} onImported={load} />
+            <AddSecretDialog envId={envId} onCreated={load} />
+          </div>
       {loading ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
