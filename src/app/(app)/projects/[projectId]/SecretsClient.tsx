@@ -25,6 +25,7 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
   const [secrets, setSecrets] = useState<SecretMeta[] | null>(null);
   const [revealed, setRevealed] = useState<Record<string, string>>({});
   const [rotating, setRotating] = useState<string | null>(null);
+  const [rotateError, setRotateError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function load() {
@@ -58,11 +59,12 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
     setRevealed((r) => { const n = { ...r }; delete n[id]; return n; });
   }
 
-  async function copyValue(id: string) {
+  async function copyValue(id: string): Promise<boolean> {
     const existing = revealed[id];
     const value = existing ?? (await fetchValue(id));
-    if (value === null) return;
+    if (value === null) return false;
     await navigator.clipboard.writeText(value);
+    return true;
   }
 
   return (
@@ -105,15 +107,24 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
       <RotateDialog
         secretKey={secrets?.find((s) => s.id === rotating)?.key ?? null}
         open={!!rotating}
-        onClose={() => setRotating(null)}
+        onClose={() => { setRotating(null); setRotateError(null); }}
+        rotateError={rotateError}
+        onRotateErrorDismiss={() => setRotateError(null)}
         onConfirm={async (value) => {
           if (!rotating) return;
-          await fetch(`/api/secrets/${rotating}/rotate`, {
+          setRotateError(null);
+          const res = await fetch(`/api/secrets/${rotating}/rotate`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ value }),
           });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            setRotateError(body.error ?? "Couldn't rotate secret.");
+            return;
+          }
           setRotating(null);
+          setRotateError(null);
           await load();
         }}
       />
@@ -133,24 +144,18 @@ function SecretRow({
   value: string | undefined;
   onReveal: () => void;
   onHide: () => void;
-  onCopy: () => void;
+  onCopy: () => Promise<boolean>;
   onRotate: () => void;
 }) {
   const isRevealed = value !== undefined;
   const [copied, setCopied] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState(30);
-
-  useEffect(() => {
-    if (!isRevealed) return;
-    setSecondsLeft(30);
-    const interval = setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
-    return () => clearInterval(interval);
-  }, [isRevealed]);
 
   async function handleCopy() {
-    await onCopy();
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    const ok = await onCopy();
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
   }
 
   return (
@@ -215,11 +220,15 @@ function RotateDialog({
   open,
   onClose,
   onConfirm,
+  rotateError,
+  onRotateErrorDismiss,
 }: {
   secretKey: string | null;
   open: boolean;
   onClose: () => void;
   onConfirm: (value: string) => Promise<void>;
+  rotateError: string | null;
+  onRotateErrorDismiss: () => void;
 }) {
   const [mode, setMode] = useState<"auto" | "manual">("auto");
   const [manualValue, setManualValue] = useState("");
@@ -248,7 +257,7 @@ function RotateDialog({
     <Dialog
       open={open}
       onOpenChange={(o) => {
-        if (!o) { onClose(); reset(); }
+        if (!o) { onClose(); onRotateErrorDismiss(); reset(); }
       }}
     >
       <DialogContent className="sm:max-w-sm">
@@ -296,10 +305,14 @@ function RotateDialog({
           <div className="rounded-lg border border-warning/30 bg-warning/8 px-3 py-2.5 text-xs text-warning leading-relaxed">
             This updates the value immediately for everyone with access. This can&apos;t be undone.
           </div>
+
+          {rotateError && (
+            <p className="text-xs text-destructive">{rotateError}</p>
+          )}
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => { onClose(); reset(); }}>
+          <Button variant="ghost" onClick={() => { onClose(); onRotateErrorDismiss(); reset(); }}>
             Cancel
           </Button>
           <Button onClick={handleConfirm} disabled={!canSubmit || submitting}>

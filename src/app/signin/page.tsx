@@ -60,7 +60,7 @@ export default function SignInPage() {
             <Button
               type="submit"
               variant="outline"
-              className="w-full gap-2.5 font-medium rounded-full bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-50"
+              className="w-full gap-2.5 font-medium rounded-full bg-white dark:bg-white text-zinc-800 dark:text-zinc-800 border-zinc-200 dark:border-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-50"
             >
               <GoogleIcon />
               <span className="w-2 h-2 rounded-sm bg-primary shrink-0" aria-hidden />

@@ -82,6 +82,7 @@ a {
 
 /* ─── Warm-neutral terminal palette (dark-first, no light mode) ─── */
 :root {
+  color-scheme: dark;
   --background: oklch(0.10 0.004 75);
   --foreground: oklch(0.95 0.004 75);
   --card: oklch(0.13 0.005 75);
@@ -116,6 +117,7 @@ a {
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.10 0.004 75);
   --foreground: oklch(0.95 0.004 75);
   --card: oklch(0.13 0.005 75);

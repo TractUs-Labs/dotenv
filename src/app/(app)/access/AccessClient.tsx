@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { Button } from "@/components/ui/button";
 import { RoleBadge } from "@/components/RoleBadge";
 import {
@@ -110,7 +110,7 @@ export default function AccessClient({
   }
 
   async function revoke(userId: string, g: Grant) {
-    if (!confirm("Revoke this access? Secrets in scope will be flagged for rotation.")) return;
+    if (!confirm("Revoke this access? The user will lose access to all secrets in scope.")) return;
     setPageError(null);
     const res = await fetch("/api/grants", {
       method: "DELETE",
@@ -310,7 +310,7 @@ export default function AccessClient({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="min-w-48">
                           {grants.map((g, idx) => (
-                            <div key={g.id}>
+                            <Fragment key={g.id}>
                               {idx > 0 && <DropdownMenuSeparator />}
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive cursor-pointer text-xs"
@@ -318,7 +318,7 @@ export default function AccessClient({
                               >
                                 Revoke {g.role} on {scopeLabel(g, projects, environments)}
                               </DropdownMenuItem>
-                            </div>
+                            </Fragment>
                           ))}
                         </DropdownMenuContent>
                       </DropdownMenu>
