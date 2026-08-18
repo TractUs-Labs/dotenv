@@ -1,49 +1,73 @@
 import { signIn } from "@/lib/auth/auth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck } from "lucide-react";
 
 export default function SignInPage() {
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center p-6">
-      <div className="w-full max-w-sm space-y-8">
-        {/* Wordmark */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <ShieldCheck className="w-6 h-6 text-primary" />
-          </div>
-          <div className="text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">dotenv</h1>
-            <p className="text-sm text-muted-foreground mt-1">Secrets your team can trust</p>
-          </div>
+    <main className="min-h-screen flex">
+      {/* Left panel */}
+      <div
+        className="dot-grid hidden md:flex flex-col w-[55%] shrink-0 p-8"
+        style={{ background: "oklch(0.06 0.004 75)" }}
+      >
+        <div className="flex items-baseline gap-1.5 mb-auto">
+          <span className="font-semibold text-foreground tracking-tight">dotenv</span>
+          <span className="font-mono text-primary text-sm select-none">&gt;_</span>
         </div>
 
-        {/* Sign-in card */}
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base font-semibold">Sign in to continue</CardTitle>
-            <CardDescription className="text-sm text-muted-foreground">
-              Secrets are encrypted at rest. Access is limited to your team.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              action={async () => {
-                "use server";
-                await signIn("google", { redirectTo: "/" });
-              }}
-            >
-              <Button type="submit" className="w-full gap-2 font-medium" variant="outline">
-                <GoogleIcon />
-                Continue with Google
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <div className="mt-auto mb-12">
+          <h1 className="text-4xl font-bold tracking-tight text-foreground leading-tight max-w-sm">
+            Every key, token, and password — one vault.
+          </h1>
+          <ul className="mt-6 space-y-2">
+            {[
+              "Envelope encryption at rest",
+              "Access is logged",
+              "Per-project environments",
+            ].map((bullet) => (
+              <li key={bullet} className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="w-1 h-1 rounded-full bg-primary shrink-0" />
+                {bullet}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
 
-        <p className="text-center text-xs text-muted-foreground">
-          Only workspace members can access secrets.
-        </p>
+      {/* Right panel */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-background">
+        <div className="w-full max-w-xs space-y-6">
+          {/* Mobile wordmark */}
+          <div className="flex items-baseline gap-1.5 md:hidden">
+            <span className="font-semibold text-foreground tracking-tight">dotenv</span>
+            <span className="font-mono text-primary text-sm select-none">&gt;_</span>
+          </div>
+
+          <div>
+            <h2 className="text-xl font-semibold text-foreground tracking-tight">
+              Sign in to Acme Corp
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Secrets encrypted at rest · access is logged
+            </p>
+          </div>
+
+          <form
+            action={async () => {
+              "use server";
+              await signIn("google", { redirectTo: "/" });
+            }}
+          >
+            <Button
+              type="submit"
+              variant="outline"
+              className="w-full gap-2.5 font-medium rounded-full bg-white dark:bg-white text-zinc-800 dark:text-zinc-800 border-zinc-200 dark:border-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-50"
+            >
+              <GoogleIcon />
+              <span className="w-2 h-2 rounded-sm bg-primary shrink-0" aria-hidden />
+              Continue with Google
+            </Button>
+          </form>
+        </div>
       </div>
     </main>
   );

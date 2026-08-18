@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ShieldCheck, FolderLock, Users, ScrollText, LogOut } from "lucide-react";
+import { FolderLock, Users, ScrollText, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string; icon: typeof FolderLock };
@@ -41,9 +41,10 @@ export function AppSidebar({
 
   return (
     <aside className="w-56 shrink-0 border-r border-border bg-sidebar flex flex-col h-screen sticky top-0">
+      {/* Wordmark */}
       <div className="h-14 flex items-center gap-2 px-4 border-b border-border">
-        <ShieldCheck className="w-5 h-5 text-primary" />
-        <span className="font-semibold tracking-tight text-sidebar-foreground">dotenv</span>
+        <span className="font-semibold tracking-tight text-foreground">dotenv</span>
+        <span className="font-mono text-primary text-sm select-none">&gt;_</span>
       </div>
 
       <nav className="flex-1 px-2 py-3 space-y-0.5">
@@ -57,8 +58,8 @@ export function AppSidebar({
               className={cn(
                 "flex items-center gap-2.5 px-2.5 py-1.5 text-sm rounded-lg transition-colors",
                 active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                  ? "text-primary bg-primary/8 font-medium"
+                  : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
               )}
             >
               <Icon className="w-4 h-4 shrink-0" />
