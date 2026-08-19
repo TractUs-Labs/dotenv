@@ -10,12 +10,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { AddSecretDialog } from "@/components/AddSecretDialog";
 import { ImportEnvDialog } from "@/components/ImportEnvDialog";
-import { Eye, EyeOff, RefreshCw, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, RefreshCw, AlertTriangle, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Eye, EyeOff, Copy, Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type SecretMeta = {
@@ -25,6 +24,12 @@ type SecretMeta = {
   latestVersion: number;
 };
 
+async function fetchSecrets(envId: string): Promise<SecretMeta[] | null> {
+  const res = await fetch(`/api/environments/${envId}/secrets`);
+  if (!res.ok) return null;
+  return (await res.json()).secrets;
+}
+
 export default function SecretsClient({ envId, envName }: { envId: string; envName: string }) {
   const [secrets, setSecrets] = useState<SecretMeta[] | null>(null);
   const [revealed, setRevealed] = useState<Record<string, string>>({});
@@ -32,16 +37,22 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
   const [rotateError, setRotateError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchSecrets(envId).then((data) => {
+      if (cancelled) return;
+      if (data) setSecrets(data);
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [envId]);
+
   async function load() {
     setLoading(true);
-    const res = await fetch(`/api/environments/${envId}/secrets`);
-    if (res.ok) setSecrets((await res.json()).secrets);
+    const data = await fetchSecrets(envId);
+    if (data) setSecrets(data);
     setLoading(false);
   }
-
-  useEffect(() => {
-    load();
-  }, [envId]);
 
   async function fetchValue(id: string): Promise<string | null> {
     const res = await fetch(`/api/secrets/${id}/value`);
@@ -76,9 +87,6 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
       <section className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              {envName}
-            </h2>
             {secrets && secrets.some((s) => s.needsRotation) && (
               <Badge variant="warning" className="text-xs gap-1">
                 <AlertTriangle className="w-3 h-3" />
@@ -90,7 +98,9 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
             <ImportEnvDialog envId={envId} onImported={load} />
             <AddSecretDialog envId={envId} onCreated={load} />
           </div>
-      {loading ? (
+        </div>
+
+        {loading ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-12 w-full bg-muted/40" />
@@ -123,7 +133,8 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
             ))}
           </div>
         </div>
-      )}
+        )}
+      </section>
 
       <RotateDialog
         secretKey={secrets?.find((s) => s.id === rotating)?.key ?? null}

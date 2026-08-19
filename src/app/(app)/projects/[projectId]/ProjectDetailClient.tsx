@@ -3,15 +3,18 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import SecretsClient from "./SecretsClient";
-import { AddSecretDialog } from "@/components/AddSecretDialog";
 
 type Env = { id: string; name: string };
 
-export default function ProjectDetailClient({ environments }: { environments: Env[] }) {
+export default function ProjectDetailClient({
+  environments,
+}: {
+  environments: Env[];
+}) {
   const [activeId, setActiveId] = useState(environments[0]?.id ?? "");
-  const [refreshKey, setRefreshKey] = useState(0);
 
-  const activeEnv = environments.find((e) => e.id === activeId) ?? environments[0];
+  const activeEnv =
+    environments.find((e) => e.id === activeId) ?? environments[0];
 
   if (!activeEnv) return null;
 
@@ -29,23 +32,17 @@ export default function ProjectDetailClient({ environments }: { environments: En
                 "px-4 py-2 text-sm font-medium transition-colors relative",
                 env.id === activeId
                   ? "text-foreground after:absolute after:bottom-0 after:inset-x-0 after:h-0.5 after:bg-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {env.name}
             </button>
           ))}
         </div>
-        <div className="pb-1">
-          <AddSecretDialog
-            envId={activeEnv.id}
-            onCreated={() => setRefreshKey((k) => k + 1)}
-          />
-        </div>
       </div>
 
       <SecretsClient
-        key={`${activeEnv.id}-${refreshKey}`}
+        key={`${activeEnv.id}`}
         envId={activeEnv.id}
         envName={activeEnv.name}
       />
