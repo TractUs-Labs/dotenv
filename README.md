@@ -169,6 +169,60 @@ version) is a human step. Per-provider auto-rotation is out of scope for v1.
 
 ---
 
+## Deploy on a VPS (Docker Compose)
+
+`docker-compose.yml` bundles everything needed to run on a single VPS: the
+Next.js **app**, a **Postgres** database, a one-shot **migrate** service, and
+**Caddy** as a reverse proxy that provisions HTTPS automatically. Nothing but
+Caddy's ports 80/443 is exposed to the internet — Postgres and the app are only
+reachable on the internal compose network.
+
+**How the app reaches Postgres:** Compose puts every service on a private
+network where each service is reachable by its name as a hostname. The app and
+migrate service connect using `db:5432` (the `db` service) — no host IP, no TLS
+(traffic never leaves the VPS), which is why `DATABASE_URL` here has no
+`sslmode=require`.
+
+**Startup order:** Postgres has a healthcheck; the `migrate` service waits for
+it, runs `pnpm db:migrate`, and exits. The `app` service only starts once
+migrations have completed successfully.
+
+### One-time setup
+
+On the VPS, in the project directory:
+
+```bash
+# 1. Encryption key (KEK) — the 32-byte key that encrypts all stored secrets.
+#    Back this file up somewhere safe; losing it makes every secret unrecoverable.
+mkdir -p secrets
+openssl rand -base64 32 > secrets/kek.b64
+
+# 2. Environment file — copy the template and fill in every value.
+cp .env.example .env
+#    Generate strong values for these before editing:
+openssl rand -base64 32   # -> AUTH_SECRET
+openssl rand -base64 24   # -> POSTGRES_PASSWORD (also update DATABASE_URL to match)
+#    Set APP_DOMAIN / AUTH_URL to your domain, and add your Google OAuth creds.
+
+# 3. Point your domain's DNS A record at the VPS's IP (needed for Caddy's cert).
+
+# 4. Build and start everything.
+docker compose up -d --build
+```
+
+The KEK stays a plain host file mounted read-only into the app container — it is
+never copied into the image or committed to git (`/secrets` is gitignored).
+
+### Day-to-day
+
+```bash
+docker compose logs -f app        # tail app logs
+docker compose up -d --build      # redeploy after pulling new code (re-runs migrations)
+docker compose down               # stop (Postgres data persists in the pgdata volume)
+```
+
+---
+
 ## Status
 
 Design settled; implementation not yet started. The next step is turning these

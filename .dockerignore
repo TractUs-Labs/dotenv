@@ -1,0 +1,38 @@
+# Dependencies (reinstalled inside the image)
+node_modules
+.pnp
+.pnp.*
+
+# Build output
+.next
+out
+build
+
+# Env & secrets — never bake these into the image
+.env
+.env.*
+secrets
+
+# VCS & tooling
+.git
+.gitignore
+.github
+
+# Tests & coverage
+tests
+coverage
+
+# Docker / deploy artifacts
+Dockerfile
+docker-compose.yml
+Caddyfile
+
+# Editor / OS cruft
+.DS_Store
+*.log
+.context
+.impeccable
+
+# Docs (not needed at build/runtime)
+docs
+*.md
