@@ -1,0 +1,6 @@
+# Terminates HTTPS for the app. APP_DOMAIN comes from the environment
+# (set in .env, passed through by docker-compose). Caddy obtains and
+# renews a Let's Encrypt certificate for it automatically.
+{$APP_DOMAIN} {
+	reverse_proxy app:3000
+}

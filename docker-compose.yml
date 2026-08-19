@@ -1,0 +1,75 @@
+# Single-VPS deployment: Next.js app + Postgres + Caddy (auto-HTTPS).
+#
+# One-time setup on the VPS (see README "Deploy on a VPS"):
+#   1. Create ./secrets/kek.b64   (openssl rand -base64 32 > secrets/kek.b64)
+#   2. Create ./.env from .env.example and fill in every value
+#   3. Point your domain's DNS A record at the VPS
+#   4. docker compose up -d --build
+#
+# Compose reads ./.env automatically for both container env (env_file)
+# and ${VAR} interpolation in this file.
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Gate dependents until Postgres actually accepts connections.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    # Not published to the host — only reachable on the compose network.
+
+  migrate:
+    # Same image as `app`; built once and shared via the tag below.
+    image: dotenv-app:local
+    env_file: .env
+    command: ["node_modules/.bin/tsx", "src/lib/db/migrate.ts"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    build: .
+    image: dotenv-app:local
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      # KEK stays a host file, mounted read-only. Never baked into the image.
+      - ./secrets/kek.b64:/app/secrets/kek.b64:ro
+    expose:
+      - "3000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        # Only serve traffic after migrations have completed successfully.
+        condition: service_completed_successfully
+
+  # caddy:
+  #   image: caddy:2
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - app
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   environment:
+  #     # Caddy provisions a Let's Encrypt cert for this domain automatically.
+  #     APP_DOMAIN: ${APP_DOMAIN}
+  #   volumes:
+  #     - ./Caddyfile:/etc/caddy/Caddyfile:ro
+  #     - caddy_data:/data
+  #     - caddy_config:/config
+
+volumes:
+  pgdata:
+  # caddy_data:
+  # caddy_config:

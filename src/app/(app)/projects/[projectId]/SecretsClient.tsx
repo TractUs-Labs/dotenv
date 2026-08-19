@@ -99,8 +99,7 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
             <AddSecretDialog envId={envId} onCreated={load} />
           </div>
         </div>
-
-        {loading ? (
+      {loading ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-12 w-full bg-muted/40" />
@@ -160,6 +159,7 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
           await load();
         }}
       />
+    </section>
     </>
   );
 }
