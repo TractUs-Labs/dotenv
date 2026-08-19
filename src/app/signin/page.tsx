@@ -7,16 +7,16 @@ export default function SignInPage() {
       {/* Left panel */}
       <div
         className="dot-grid hidden md:flex flex-col w-[55%] shrink-0 p-8"
-        style={{ background: "oklch(0.06 0.004 75)" }}
+        style={{ backgroundColor: "oklch(0.06 0.004 75)" }}
       >
-        <div className="flex items-baseline gap-1.5 mb-auto">
-          <span className="font-semibold text-foreground tracking-tight">dotenv</span>
-          <span className="font-mono text-primary text-sm select-none">&gt;_</span>
+        <div className="flex flex-row items-center gap-2 px-2 text-lg">
+          <p className="text-primary font-mono select-none">&gt;_</p>
+          <h1 className="font-semibold tracking-tight">dotenv</h1>
         </div>
 
         <div className="mt-auto mb-12">
           <h1 className="text-4xl font-bold tracking-tight text-foreground leading-tight max-w-sm">
-            Every key, token, and password — one vault.
+            Every key, token, and password in one vault.
           </h1>
           <ul className="mt-6 space-y-2">
             {[
@@ -24,7 +24,10 @@ export default function SignInPage() {
               "Access is logged",
               "Per-project environments",
             ].map((bullet) => (
-              <li key={bullet} className="flex items-center gap-2 text-sm text-muted-foreground">
+              <li
+                key={bullet}
+                className="flex items-center gap-2 text-sm text-muted-foreground"
+              >
                 <span className="w-1 h-1 rounded-full bg-primary shrink-0" />
                 {bullet}
               </li>
@@ -38,17 +41,18 @@ export default function SignInPage() {
         <div className="w-full max-w-xs space-y-6">
           {/* Mobile wordmark */}
           <div className="flex items-baseline gap-1.5 md:hidden">
-            <span className="font-semibold text-foreground tracking-tight">dotenv</span>
-            <span className="font-mono text-primary text-sm select-none">&gt;_</span>
+            <span className="font-semibold text-foreground tracking-tight">
+              dotenv
+            </span>
+            <span className="font-mono text-primary text-sm select-none">
+              &gt;_
+            </span>
           </div>
 
           <div>
             <h2 className="text-xl font-semibold text-foreground tracking-tight">
-              Sign in to Acme Corp
+              Sign in using your TractUs Labs Account
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Secrets encrypted at rest · access is logged
-            </p>
           </div>
 
           <form
@@ -63,7 +67,6 @@ export default function SignInPage() {
               className="w-full gap-2.5 font-medium rounded-full bg-white dark:bg-white text-zinc-800 dark:text-zinc-800 border-zinc-200 dark:border-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-50"
             >
               <GoogleIcon />
-              <span className="w-2 h-2 rounded-sm bg-primary shrink-0" aria-hidden />
               Continue with Google
             </Button>
           </form>

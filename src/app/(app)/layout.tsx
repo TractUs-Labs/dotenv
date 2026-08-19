@@ -4,6 +4,7 @@ import { getDb } from "@/lib/db/client";
 import { getOrgRole } from "@/lib/access/authorize";
 import { roleAtLeast } from "@/lib/access/roles";
 import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -11,6 +12,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const userId = (session as unknown as { userId?: string }).userId;
   if (!userId) redirect("/signin");
   const email = session.user.email;
+  const name = session.user.name;
 
   const role = await getOrgRole(getDb(), userId);
   const isOrgAdmin = !!role && roleAtLeast(role, "admin");
@@ -21,9 +23,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <AppSidebar email={email} isOrgAdmin={isOrgAdmin} signOutAction={signOutAction} />
-      <div className="flex-1 min-w-0">{children}</div>
-    </div>
+    <SidebarProvider>
+      <AppSidebar email={email} name={name} isOrgAdmin={isOrgAdmin} signOutAction={signOutAction} />
+      <SidebarInset>{children}</SidebarInset>
+    </SidebarProvider>
   );
 }
