@@ -13,9 +13,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { AddSecretDialog } from "@/components/AddSecretDialog";
 import { ImportEnvDialog } from "@/components/ImportEnvDialog";
-import { Eye, EyeOff, RefreshCw, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, RefreshCw, AlertTriangle, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Eye, EyeOff, Copy, Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type SecretMeta = {
@@ -90,6 +90,7 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
             <ImportEnvDialog envId={envId} onImported={load} />
             <AddSecretDialog envId={envId} onCreated={load} />
           </div>
+        </div>
       {loading ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
@@ -149,6 +150,7 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
           await load();
         }}
       />
+    </section>
     </>
   );
 }
