@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ThemeSwitcherSidebar } from "@/components/theme-switcher-sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,9 +64,14 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex flex-row items-center gap-2 px-2 text-lg">
-          <p className="text-primary font-mono select-none">&gt;_</p>
-          <h1 className="font-semibold tracking-tight">dotenv</h1>
+        <div className="flex flex-row items-center justify-between px-2 text-lg">
+          <div className="flex flex-row items-center gap-2">
+            <p className="text-primary font-mono select-none">&gt;_</p>
+            <h1 className="font-semibold tracking-tight">dotenv</h1>
+          </div>
+          <div className="group-data-[collapsible=icon]:hidden">
+            <ThemeSwitcherSidebar />
+          </div>
         </div>
       </SidebarHeader>
 
