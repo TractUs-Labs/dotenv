@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Upload } from "lucide-react";
 import { parseEnvFile } from "@/lib/env-parser/parse-dotenv";
+import { withBasePath } from "@/lib/base-path";
 
 type ParsedPair = { key: string; value: string };
 
@@ -43,7 +44,7 @@ export function ImportEnvDialog({ envId, onImported }: Props) {
     setError(null);
     setResult(null);
     try {
-      const res = await fetch(`/api/environments/${envId}/secrets/bulk`, {
+      const res = await fetch(withBasePath(`/api/environments/${envId}/secrets/bulk`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ secrets: pairs }),
@@ -64,9 +65,9 @@ export function ImportEnvDialog({ envId, onImported }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogTrigger render={<Button size="sm" variant="ghost" className="gap-1.5 text-xs" />}>
-        <Upload className="w-3.5 h-3.5" />
-        Import .env
+      <DialogTrigger render={<Button size="sm" variant="outline" className="gap-1.5" />}>
+        <Upload className="size-3.5" />
+        Import
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db/client";
 import { listProjectsForUserWithCounts, getEnvironments } from "@/lib/projects/projects";
 import { NewProjectDialog } from "@/components/NewProjectDialog";
+import { AppEmptyState, AppPage, AppPageHeader } from "@/components/AppPage";
 import { FolderLock } from "lucide-react";
 import Link from "next/link";
 
@@ -12,7 +13,7 @@ function envChipClass(name: string): string {
   const lower = name.toLowerCase();
   if (lower === "prod" || lower === "production") return "bg-env-prod-bg text-env-prod";
   if (lower === "staging") return "bg-env-staging-bg text-env-staging";
-  return "bg-env-dev-bg text-env-dev"; // dev + anything else
+  return "bg-env-dev-bg text-env-dev";
 }
 
 export default async function Home() {
@@ -27,29 +28,32 @@ export default async function Home() {
   );
 
   return (
-    <main className="max-w-5xl w-full mx-auto px-8 py-10">
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Projects</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {projects.length === 0
-              ? "No projects yet"
-              : `${projects.length} project${projects.length !== 1 ? "s" : ""}`}
-          </p>
-        </div>
-        <NewProjectDialog />
-      </div>
+    <AppPage>
+      <AppPageHeader
+        title="Projects"
+        description={
+          projects.length === 0
+            ? "No projects yet"
+            : `${projects.length} project${projects.length !== 1 ? "s" : ""}`
+        }
+        actions={<NewProjectDialog />}
+      />
 
       {projects.length === 0 ? (
-        <EmptyState />
+        <AppEmptyState
+          icon={<FolderLock />}
+          title="No projects"
+          description="Create a project to get started, or ask an admin to add you to one."
+          action={<NewProjectDialog />}
+        />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
           {projects.map((p, i) => (
             <ProjectCard key={p.id} project={p} envs={projectEnvs[i] ?? []} />
           ))}
         </div>
       )}
-    </main>
+    </AppPage>
   );
 }
 
@@ -63,10 +67,10 @@ function ProjectCard({
   return (
     <Link
       href={`/projects/${project.id}`}
-      className="group block rounded-xl border border-border bg-card p-5 hover:border-primary/30 transition-colors"
+      className="group block rounded-xl border border-border bg-card p-5 transition-colors duration-200 hover:border-primary/30 hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <div className="flex items-start justify-between gap-3 mb-3">
-        <span className="font-medium text-foreground group-hover:text-primary transition-colors">
+        <span className="font-medium text-foreground group-hover:text-primary transition-colors duration-200">
           {project.name}
         </span>
         <span className="font-mono text-xs text-muted-foreground shrink-0 tabular-nums">
@@ -87,17 +91,5 @@ function ProjectCard({
         </div>
       )}
     </Link>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center border border-border rounded-xl">
-      <FolderLock className="w-8 h-8 text-muted-foreground mb-3" />
-      <h3 className="text-base font-semibold text-foreground mb-1">No projects</h3>
-      <p className="text-sm text-muted-foreground max-w-xs">
-        Create a project to get started, or ask an admin to add you to one.
-      </p>
-    </div>
   );
 }

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
+import { withBasePath } from "@/lib/base-path";
 
 export function AddSecretDialog({ envId, onCreated }: { envId: string; onCreated: () => void }) {
   const [open, setOpen] = useState(false);
@@ -25,7 +26,7 @@ export function AddSecretDialog({ envId, onCreated }: { envId: string; onCreated
     if (!key.trim() || !value.trim()) return;
     setSubmitting(true);
     setError(null);
-    const res = await fetch(`/api/environments/${envId}/secrets`, {
+    const res = await fetch(withBasePath(`/api/environments/${envId}/secrets`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key: key.trim(), value }),
@@ -55,9 +56,9 @@ export function AddSecretDialog({ envId, onCreated }: { envId: string; onCreated
         if (!o) handleClose();
       }}
     >
-      <DialogTrigger render={<Button size="sm" variant="ghost" className="gap-1.5 text-xs text-muted-foreground hover:text-foreground" />}>
-        <Plus className="w-3.5 h-3.5" />
-        Add secret
+      <DialogTrigger render={<Button size="sm" className="gap-1.5" />}>
+        <Plus className="size-3.5" />
+        Add
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -85,9 +86,9 @@ export function AddSecretDialog({ envId, onCreated }: { envId: string; onCreated
           <Button variant="ghost" onClick={() => { setOpen(false); handleClose(); }}>
             Cancel
           </Button>
-          <Button onClick={submit} disabled={!key.trim() || !value.trim() || submitting}>
-            {submitting ? "Adding…" : "Add secret"}
-          </Button>
+            <Button onClick={submit} disabled={!key.trim() || !value.trim() || submitting}>
+              {submitting ? "Adding…" : "Add"}
+            </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
