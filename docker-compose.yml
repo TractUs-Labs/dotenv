@@ -34,7 +34,11 @@ services:
         condition: service_healthy
 
   app:
-    build: .
+    build:
+      context: .
+      args:
+        # Must match BASE_PATH in .env; Next bakes this into the client bundle.
+        BASE_PATH: ${BASE_PATH:-}
     image: dotenv-app:local
     restart: unless-stopped
     env_file: .env
