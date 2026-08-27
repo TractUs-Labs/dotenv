@@ -7,12 +7,18 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 FROM base AS build
+# basePath is bake-time for Next.js; pass via compose/Dokploy build args.
+ARG BASE_PATH=
+ENV BASE_PATH=$BASE_PATH
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm build
 
 FROM base AS run
 ENV NODE_ENV=production
+# Runtime needs the same value so Auth.js / env helpers stay consistent.
+ARG BASE_PATH=
+ENV BASE_PATH=$BASE_PATH
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
