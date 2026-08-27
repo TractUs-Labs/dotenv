@@ -53,21 +53,21 @@ services:
         # Only serve traffic after migrations have completed successfully.
         condition: service_completed_successfully
 
-  caddy:
-    image: caddy:2
-    restart: unless-stopped
-    depends_on:
-      - app
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      # Caddy provisions a Let's Encrypt cert for this domain automatically.
-      APP_DOMAIN: ${APP_DOMAIN}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
+  # caddy:
+  #   image: caddy:2
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - app
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   environment:
+  #     # Caddy provisions a Let's Encrypt cert for this domain automatically.
+  #     APP_DOMAIN: ${APP_DOMAIN}
+  #   volumes:
+  #     - ./Caddyfile:/etc/caddy/Caddyfile:ro
+  #     - caddy_data:/data
+  #     - caddy_config:/config
 
 volumes:
   pgdata:

@@ -23,13 +23,8 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import {
-  FolderLock,
-  Users,
-  ScrollText,
-  LogOut,
-  ChevronsUpDown,
-} from "lucide-react";
+import { FolderLock, Users, ScrollText, LogOut, ChevronsUpDown } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type NavItem = { href: string; label: string; icon: typeof FolderLock };
 
@@ -98,6 +93,12 @@ export function AppSidebar({
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <ThemeToggle
+              render={<SidebarMenuButton tooltip="Toggle theme" />}
+              label={<span>Toggle theme</span>}
+            />
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>

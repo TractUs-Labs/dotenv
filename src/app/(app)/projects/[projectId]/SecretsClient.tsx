@@ -159,7 +159,6 @@ export default function SecretsClient({ envId, envName }: { envId: string; envNa
           await load();
         }}
       />
-    </section>
     </>
   );
 }
