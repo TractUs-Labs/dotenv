@@ -24,7 +24,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <SidebarProvider>
-      <AppSidebar email={email} name={name} isOrgAdmin={isOrgAdmin} signOutAction={signOutAction} />
+      <AppSidebar email={email} name={name ?? email} isOrgAdmin={isOrgAdmin} signOutAction={signOutAction} />
       <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
   );

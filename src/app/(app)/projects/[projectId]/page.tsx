@@ -1,7 +1,14 @@
+import { auth } from "@/lib/auth/auth";
 import { getDb } from "@/lib/db/client";
 import { getEnvironments, getProject } from "@/lib/projects/projects";
+import { getOrgRole } from "@/lib/access/authorize";
+import { roleAtLeast } from "@/lib/access/roles";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import ProjectDetailClient from "./ProjectDetailClient";
+import { DeleteProjectButton } from "@/components/DeleteProjectButton";
+import { AppPage } from "@/components/AppPage";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,8 +17,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
 
 export default async function ProjectPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await params;
@@ -20,8 +25,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ projec
   if (!project) notFound();
   const environments = await getEnvironments(db, projectId);
 
+  const session = await auth();
+  const userId = (session as unknown as { userId?: string } | null)?.userId;
+  const role = userId ? await getOrgRole(db, userId) : null;
+  const canDeleteProject = !!role && roleAtLeast(role, "owner");
+
   return (
-    <main className="max-w-5xl w-full mx-auto px-8 py-8">
+    <AppPage>
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -38,20 +48,28 @@ export default async function ProjectPage({ params }: { params: Promise<{ projec
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex items-start justify-between mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{project.name}</h1>
-        <Link href="/access" className={buttonVariants({ variant: "ghost", size: "sm", className: "text-muted-foreground hover:text-foreground" })}>
-          Invite
-        </Link>
+      <div className="flex items-start justify-between mb-8 gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground text-balance min-w-0">
+          {project.name}
+        </h1>
+        <div className="flex items-center gap-1 shrink-0">
+          {canDeleteProject && (
+            <DeleteProjectButton projectId={projectId} projectName={project.name} />
+          )}
+          <Link
+            href="/access"
+            className={buttonVariants({
+              variant: "ghost",
+              size: "sm",
+              className: "text-muted-foreground hover:text-foreground",
+            })}
+          >
+            Invite
+          </Link>
+        </div>
       </div>
 
-      {environments.length === 0 ? (
-        <div className="py-20 text-center">
-          <p className="text-sm text-muted-foreground">No environments configured for this project.</p>
-        </div>
-      ) : (
-        <ProjectDetailClient environments={environments} />
-      )}
-    </main>
+      <ProjectDetailClient projectId={projectId} environments={environments} />
+    </AppPage>
   );
 }

@@ -25,7 +25,6 @@ coverage
 # Docker / deploy artifacts
 Dockerfile
 docker-compose.yml
-Caddyfile
 
 # Editor / OS cruft
 .DS_Store

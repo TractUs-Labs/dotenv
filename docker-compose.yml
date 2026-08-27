@@ -1,10 +1,9 @@
-# Single-VPS deployment: Next.js app + Postgres + Caddy (auto-HTTPS).
+# Single-VPS deployment: app + Postgres.
 #
 # One-time setup on the VPS (see README "Deploy on a VPS"):
 #   1. Create ./secrets/kek.b64   (openssl rand -base64 32 > secrets/kek.b64)
 #   2. Create ./.env from .env.example and fill in every value
-#   3. Point your domain's DNS A record at the VPS
-#   4. docker compose up -d --build
+#   3. docker compose up -d --build
 #
 # Compose reads ./.env automatically for both container env (env_file)
 # and ${VAR} interpolation in this file.
@@ -53,23 +52,5 @@ services:
         # Only serve traffic after migrations have completed successfully.
         condition: service_completed_successfully
 
-  caddy:
-    image: caddy:2
-    restart: unless-stopped
-    depends_on:
-      - app
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      # Caddy provisions a Let's Encrypt cert for this domain automatically.
-      APP_DOMAIN: ${APP_DOMAIN}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-
 volumes:
   pgdata:
-  # caddy_data:
-  # caddy_config:

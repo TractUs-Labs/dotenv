@@ -1,13 +1,17 @@
 import { signIn } from "@/lib/auth/auth";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function SignInPage() {
   return (
-    <main className="min-h-screen flex">
+    <main className="min-h-screen flex relative">
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeToggle />
+      </div>
+
       {/* Left panel */}
       <div
-        className="dot-grid hidden md:flex flex-col w-[55%] shrink-0 p-8"
-        style={{ backgroundColor: "oklch(0.06 0.004 75)" }}
+        className="dot-grid hidden md:flex flex-col w-[55%] shrink-0 p-8 bg-sidebar"
       >
         <div className="flex flex-row items-center gap-2 px-2 text-lg">
           <p className="text-primary font-mono select-none">&gt;_</p>
@@ -37,7 +41,7 @@ export default function SignInPage() {
       </div>
 
       {/* Right panel */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-background">
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-background">
         <div className="w-full max-w-xs space-y-6">
           {/* Mobile wordmark */}
           <div className="flex items-baseline gap-1.5 md:hidden">
